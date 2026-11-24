@@ -1,0 +1,2021 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iLore — Интерактивная хроника и конфигуратор гаджетов Apple</title>
+<style>
+  :root {
+    --bg-main: #050507;
+    --bg-card: rgba(18, 18, 22, 0.75);
+    --bg-card-hover: rgba(28, 28, 34, 0.85);
+    --border-glass: rgba(255, 255, 255, 0.08);
+    --border-glow: rgba(255, 255, 255, 0.2);
+    --text-primary: #f5f5f7;
+    --text-muted: #86868b;
+    --text-sub: #525257;
+    --accent: #0ABAB5; /* Tiffany Cyan */
+    --ambient-glow: #0ABAB5;
+    --spring: cubic-bezier(0.19, 1, 0.22, 1);
+    --spring-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Динамическая живая аура на фоне */
+  .ambient-aura {
+    position: fixed;
+    top: -160px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1100px;
+    height: 700px;
+    background: radial-gradient(circle, var(--ambient-glow) 0%, transparent 70%);
+    opacity: 0.16;
+    filter: blur(140px);
+    pointer-events: none;
+    z-index: 0;
+    transition: background 0.8s var(--spring), opacity 0.5s ease;
+  }
+
+  /* СТИЛЬНЫЙ ХЕДЕР APPLE STUDIO */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(6, 6, 8, 0.78);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    border-bottom: 1px solid var(--border-glass);
+    padding: 12px 32px;
+  }
+
+  .header-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+  }
+
+  .logo-block {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .logo-icon {
+    font-size: 20px;
+    color: #fff;
+    filter: drop-shadow(0 0 10px rgba(255,255,255,0.4));
+  }
+
+  .logo-title {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #ffffff 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .logo-badge {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-muted);
+    border: 1px solid var(--border-glass);
+  }
+
+  /* Сегментные табы с плавающим бегунком */
+  .tabs-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-glass);
+    border-radius: 999px;
+    padding: 4px;
+    overflow-x: auto;
+  }
+
+  .tabs-wrapper::-webkit-scrollbar { display: none; }
+
+  .nav-glider {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: 4px;
+    background: rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+    transition: all 0.4s var(--spring);
+    pointer-events: none;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    border: 0.5px solid rgba(255, 255, 255, 0.18);
+  }
+
+  .tab-btn {
+    position: relative;
+    z-index: 2;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 7px 18px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.3s ease;
+    border-radius: 999px;
+  }
+
+  .tab-btn.active {
+    color: #ffffff;
+  }
+
+  .tab-btn:hover:not(.active) {
+    color: #dedee3;
+  }
+
+  /* Поисковая строка */
+  .search-area {
+    position: relative;
+    width: 220px;
+  }
+
+  .search-area input {
+    width: 100%;
+    height: 34px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-glass);
+    border-radius: 999px;
+    padding: 0 16px 0 34px;
+    font-size: 13px;
+    color: #fff;
+    outline: none;
+    transition: all 0.3s var(--spring);
+  }
+
+  .search-area input:focus {
+    width: 260px;
+    background: rgba(255, 255, 255, 0.09);
+    border-color: var(--accent);
+    box-shadow: 0 0 16px rgba(10, 186, 181, 0.25);
+  }
+
+  .search-area svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 14px;
+    fill: var(--text-muted);
+    pointer-events: none;
+  }
+
+  /* КОНТЕЙНЕР СТРАНИЦЫ */
+  main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 48px 32px 100px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* КАТАЛОГ: ЗАГОЛОВОК */
+  .catalog-intro {
+    text-align: center;
+    margin-bottom: 56px;
+    animation: fadeUp 0.7s var(--spring) both;
+  }
+
+  .catalog-intro h1 {
+    font-size: 54px;
+    font-weight: 800;
+    letter-spacing: -1.6px;
+    margin-bottom: 14px;
+    background: linear-gradient(180deg, #ffffff 30%, #a1a1aa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .catalog-intro p {
+    color: var(--text-muted);
+    font-size: 18px;
+    max-width: 720px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* СЕТКА ГАДЖЕТОВ С КАСКАДОМ */
+  .catalog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 32px;
+  }
+
+  /* 3D-КАРТОЧКА БЕЗ БЕЛОГО ПЯТНА */
+  .gadget-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-glass);
+    border-radius: 30px;
+    padding: 34px;
+    cursor: pointer;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.22s ease-out, border-color 0.3s ease, box-shadow 0.4s ease;
+    animation: cascadeEntrance 0.65s var(--spring) both;
+    animation-delay: calc(var(--delay, 0) * 55ms);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .gadget-card:hover {
+    border-color: var(--border-glow);
+    box-shadow: 0 25px 50px -10px rgba(0, 0, 0, 0.75), 0 0 30px rgba(10, 186, 181, 0.12);
+  }
+
+  .card-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .card-category-badge {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+    border: 1px solid var(--border-glass);
+    letter-spacing: 0.4px;
+  }
+
+  .card-era-year {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .card-art-box {
+    height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 10px 0 24px;
+    transform: translateZ(30px);
+  }
+
+  .card-art-box svg {
+    max-height: 200px;
+    width: auto;
+    filter: drop-shadow(0 16px 26px rgba(0,0,0,0.6));
+    transition: transform 0.5s var(--spring);
+  }
+
+  .gadget-card:hover .card-art-box svg {
+    transform: scale(1.08) translateY(-4px);
+  }
+
+  .card-model-title {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+    color: #fff;
+  }
+
+  .card-model-tagline {
+    font-size: 14.5px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 24px;
+    flex-grow: 1;
+  }
+
+  .card-bottom-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .color-dots-line {
+    display: flex;
+    gap: 8px;
+  }
+
+  .swatch-pip {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .explore-btn {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: gap 0.25s var(--spring);
+  }
+
+  .gadget-card:hover .explore-btn {
+    gap: 10px;
+  }
+
+  /* =========================================================
+     ИНТЕРАКТИВНАЯ СТРАНИЦА УСТРОЙСТВА (SHOWROOM)
+     ========================================================= */
+  #detail-view {
+    display: none;
+    animation: pageIn 0.5s var(--spring) both;
+  }
+
+  .btn-back-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-glass);
+    color: var(--text-primary);
+    padding: 10px 22px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 36px;
+    transition: all 0.3s var(--spring);
+  }
+
+  .btn-back-nav:hover {
+    background: rgba(255, 255, 255, 0.12);
+    transform: translateX(-5px);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+  }
+
+  /* Студия кастомизации устройства */
+  .studio-container {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 52px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-glass);
+    border-radius: 38px;
+    padding: 52px;
+    margin-bottom: 72px;
+    position: relative;
+    box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.8);
+  }
+
+  .studio-stage {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 480px;
+    background: radial-gradient(circle at center, var(--stage-ambient, rgba(10, 186, 181, 0.2)) 0%, transparent 72%);
+    border-radius: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 40px;
+    transition: background 0.8s var(--spring);
+  }
+
+  #studio-svg-display {
+    transition: transform 0.5s var(--spring-bounce);
+  }
+
+  #studio-svg-display.pulse {
+    transform: scale(1.07);
+  }
+
+  .stage-color-legend {
+    margin-top: 28px;
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+
+  .stage-color-legend strong {
+    color: #ffffff;
+  }
+
+  /* Правая панель конфигуратора */
+  .config-dock {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .dock-eyebrow {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .dock-title {
+    font-size: 46px;
+    font-weight: 800;
+    letter-spacing: -1.2px;
+    margin-bottom: 12px;
+    line-height: 1.1;
+  }
+
+  .dock-tagline {
+    font-size: 16.5px;
+    color: var(--text-muted);
+    line-height: 1.55;
+    margin-bottom: 30px;
+  }
+
+  /* Блоки выбора опций */
+  .config-group {
+    margin-bottom: 24px;
+  }
+
+  .group-header {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .group-header span {
+    color: #fff;
+  }
+
+  /* Палитра цветов */
+  .swatches-grid {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .color-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    transition: transform 0.3s var(--spring-bounce), box-shadow 0.3s ease, border-color 0.3s ease;
+  }
+
+  .color-button:hover {
+    transform: scale(1.15);
+  }
+
+  .color-button.active {
+    transform: scale(1.2);
+    border-color: #fff;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.18), 0 0 20px var(--accent);
+  }
+
+  /* Чипсы параметров (RAM, SSD, Стеклянное покрытие, Процессоры) */
+  .chips-layout {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+    gap: 10px;
+  }
+
+  .config-chip {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-glass);
+    border-radius: 14px;
+    padding: 12px 14px;
+    color: var(--text-primary);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.3s var(--spring);
+  }
+
+  .config-chip:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+
+  .config-chip.active {
+    border-color: var(--accent);
+    background: rgba(10, 186, 181, 0.12);
+    box-shadow: 0 0 20px rgba(10, 186, 181, 0.25);
+    transform: translateY(-2px);
+  }
+
+  .chip-main-txt {
+    font-size: 14px;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .chip-sub-txt {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: block;
+  }
+
+  /* Плашка итоговой цены (Одометр) */
+  .receipt-bar {
+    margin-top: 14px;
+    padding: 22px 26px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+    border: 1px solid var(--border-glass);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .receipt-meta-line {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .receipt-specs-preview {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    margin-top: 4px;
+  }
+
+  .receipt-final-price {
+    font-size: 34px;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: -1px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* РАЗДЕЛЫ ХАРАКТЕРИСТИК И СТОРИТЕЛЛИНГА */
+  .chapter-heading {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -0.6px;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  .chapter-heading span {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  /* Сетка понятных характеристик */
+  .narrative-specs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    margin-bottom: 72px;
+  }
+
+  .spec-story-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-glass);
+    border-radius: 24px;
+    padding: 28px;
+    transition: transform 0.3s var(--spring), border-color 0.3s ease;
+  }
+
+  .spec-story-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--border-glow);
+  }
+
+  .spec-raw-text {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 10px;
+    text-decoration: line-through;
+    opacity: 0.7;
+  }
+
+  .spec-human-headline {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #fff;
+    letter-spacing: -0.3px;
+  }
+
+  .spec-human-body {
+    font-size: 14.5px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  /* Истории, блогеры и закулисье */
+  .lore-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin-bottom: 72px;
+  }
+
+  .lore-block {
+    background: var(--bg-card);
+    border: 1px solid var(--border-glass);
+    border-left: 4px solid var(--accent);
+    border-radius: 24px;
+    padding: 34px 40px;
+    position: relative;
+    transition: transform 0.3s var(--spring);
+  }
+
+  .lore-block:hover {
+    transform: translateX(6px);
+  }
+
+  .lore-meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .lore-type-tag {
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: rgba(10, 186, 181, 0.15);
+    color: var(--accent);
+  }
+
+  .lore-speaker {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+
+  .lore-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    letter-spacing: -0.4px;
+  }
+
+  .lore-content {
+    font-size: 16px;
+    line-height: 1.7;
+    color: #d1d5db;
+  }
+
+  /* Совместимые аксессуары */
+  .ecosystem-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 22px;
+  }
+
+  .accessory-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border-glass);
+    border-radius: 22px;
+    padding: 26px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.3s var(--spring), border-color 0.3s ease;
+  }
+
+  .accessory-item:hover {
+    transform: translateY(-4px);
+    border-color: var(--border-glow);
+  }
+
+  .acc-type-pill {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .acc-name-text {
+    font-size: 19px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #fff;
+  }
+
+  .acc-note-text {
+    font-size: 13.5px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  /* АНИМАЦИИ */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes cascadeEntrance {
+    from { opacity: 0; transform: translateY(35px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  @keyframes pageIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 980px) {
+    .studio-container { grid-template-columns: 1fr; padding: 32px; gap: 36px; }
+    .catalog-intro h1 { font-size: 36px; }
+    .dock-title { font-size: 34px; }
+    header { padding: 12px 18px; }
+    main { padding: 32px 18px 80px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="ambient-aura" id="ambient-aura"></div>
+
+<header>
+  <div class="header-container">
+    <div class="logo-block" onclick="exitToCatalog()">
+      <span class="logo-icon"></span>
+      <span class="logo-title">iLore</span>
+      <span class="logo-badge">Apple Universe</span>
+    </div>
+
+    <!-- Сегментные фильтры со всеми категориями -->
+    <nav class="tabs-wrapper" id="tabs-wrapper">
+      <div class="nav-glider" id="nav-glider"></div>
+      <button class="tab-btn active" data-cat="all">Все шедевры</button>
+      <button class="tab-btn" data-cat="iPhone">iPhone</button>
+      <button class="tab-btn" data-cat="MacBook">MacBook</button>
+      <button class="tab-btn" data-cat="Mac">Компьютеры Mac</button>
+      <button class="tab-btn" data-cat="iPad">iPad</button>
+      <button class="tab-btn" data-cat="Watch">Apple Watch</button>
+      <button class="tab-btn" data-cat="Audio">AirPods & Звук</button>
+      <button class="tab-btn" data-cat="Vision">Vision Pro & VR</button>
+      <button class="tab-btn" data-cat="Retro">Легенды & Ретро</button>
+    </nav>
+
+    <div class="search-area">
+      <svg viewBox="0 0 24 24"><path d="M10 2a8 8 0 015.293 14.004l4.853 4.853-1.414 1.414-4.853-4.853A8 8 0 1110 2zm0 2a6 6 0 100 12 6 6 0 000-12z"/></svg>
+      <input type="text" id="catalog-search" placeholder="Поиск устройства, факта...">
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- КАТАЛОГ ГАДЖЕТОВ -->
+  <section id="catalog-view">
+    <div class="catalog-intro">
+      <h1>Гаджеты, изменившие индустрию</h1>
+      <p>Интерактивная кастомизация оригинальных конфигураций, цветов и стекол. Без сухих скучных таблиц — с живыми историями техноблогеров, драмами презентаций и закулисьем Apple.</p>
+    </div>
+
+    <div class="catalog-grid" id="catalog-grid"></div>
+  </section>
+
+  <!-- СТРАНИЦА УСТРОЙСТВА И КОНФИГУРАТОР -->
+  <section id="detail-view">
+    <button class="btn-back-nav" onclick="exitToCatalog()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+      Вернуться в каталог
+    </button>
+
+    <div class="studio-container">
+      <div class="studio-stage" id="studio-stage">
+        <div id="studio-svg-display"></div>
+        <div class="stage-color-legend">Цвет корпуса: <strong id="stage-color-txt">—</strong></div>
+      </div>
+
+      <div class="config-dock">
+        <div class="dock-eyebrow" id="dock-eyebrow">Категория</div>
+        <h2 class="dock-title" id="dock-title">Название устройства</h2>
+        <p class="dock-tagline" id="dock-tagline">Слоган устройства</p>
+
+        <!-- 1. Цвета корпуса -->
+        <div class="config-group">
+          <div class="group-header">1. Историческая расцветка <span id="lbl-color">—</span></div>
+          <div class="swatches-grid" id="swatches-dock"></div>
+        </div>
+
+        <!-- 2. Стекло экрана -->
+        <div class="config-group" id="grp-glass" style="display: none;">
+          <div class="group-header">2. Стекло дисплея <span id="lbl-glass">—</span></div>
+          <div class="chips-layout" id="chips-glass"></div>
+        </div>
+
+        <!-- 3. Процессор / Чип -->
+        <div class="config-group" id="grp-chip" style="display: none;">
+          <div class="group-header">3. Процессор и видеоядра <span id="lbl-chip">—</span></div>
+          <div class="chips-layout" id="chips-chip"></div>
+        </div>
+
+        <!-- 4. ОЗУ (Unified Memory) -->
+        <div class="config-group" id="grp-ram" style="display: none;">
+          <div class="group-header">4. Оперативная память <span id="lbl-ram">—</span></div>
+          <div class="chips-layout" id="chips-ram"></div>
+        </div>
+
+        <!-- 5. Накопитель SSD / Flash -->
+        <div class="config-group" id="grp-storage">
+          <div class="group-header">5. Объем накопителя <span id="lbl-storage">—</span></div>
+          <div class="chips-layout" id="chips-storage"></div>
+        </div>
+
+        <!-- 6. Модуль связи / Ремешок -->
+        <div class="config-group" id="grp-conn" style="display: none;">
+          <div class="group-header">6. Связь / Ремешок <span id="lbl-conn">—</span></div>
+          <div class="chips-layout" id="chips-conn"></div>
+        </div>
+
+        <!-- Одометр цены и чек сборки -->
+        <div class="receipt-bar">
+          <div>
+            <div class="receipt-meta-line">Оригинальная цена конфигурации на старте:</div>
+            <div class="receipt-specs-preview" id="receipt-preview-line">—</div>
+          </div>
+          <div class="receipt-final-price" id="odometer-price">$0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- БЛОК 1: ХАРАКТЕРИСТИКИ ПО-ЧЕЛОВЕЧЕСКИ -->
+    <h3 class="chapter-heading"><span>01</span> Характеристики на человеческом языке</h3>
+    <div class="narrative-specs-grid" id="specs-mount"></div>
+
+    <!-- БЛОК 2: СТОРИТЕЛЛИНГ И ЗАКУЛИСЬЕ -->
+    <h3 class="chapter-heading"><span>02</span> Закулисье, цитаты блогеров и скандалы</h3>
+    <div class="lore-timeline" id="lore-mount"></div>
+
+    <!-- БЛОК 3: ЭКОСИСТЕМА И АКСЕССУАРЫ -->
+    <h3 class="chapter-heading"><span>03</span> Идеальная пара: синергия экосистемы</h3>
+    <div class="ecosystem-grid" id="eco-mount"></div>
+  </section>
+</main>
+
+<script>
+  // БОЛЬШАЯ БАЗА УСТРОЙСТВ СО ВСЕМИ КАТЕГОРИЯМИ И КОНФИГУРАЦИЯМИ
+  const fullAppleCatalog = [
+    // --- IPHONE ---
+    {
+      id: "iphone-16-pro-max",
+      category: "iPhone",
+      name: "iPhone 16 Pro Max",
+      year: 2024,
+      shape: "iphone-modern",
+      tagline: "Флагман эры Apple Intelligence с новой сенсорной кнопкой Camera Control и титаном цвета Desert.",
+      colors: [
+        { name: "Desert Titanium (Пустынный титан)", hex: "#C4A891" },
+        { name: "Natural Titanium (Натуральный титан)", hex: "#98938B" },
+        { name: "White Titanium (Белый титан)", hex: "#EDEBE8" },
+        { name: "Black Titanium (Черный титан)", hex: "#2B2C2F" }
+      ],
+      options: {
+        storage: [
+          { label: "256 ГБ", mod: 0 },
+          { label: "512 ГБ", mod: 200 },
+          { label: "1 ТБ", mod: 400 }
+        ],
+        connectivity: [
+          { label: "5G + Dual eSIM", mod: 0, sub: "Без физ. лотка в США" }
+        ]
+      },
+      basePrice: 1199,
+      humanSpecs: [
+        {
+          raw: "Сенсорная панель Camera Control с Taptic Engine",
+          title: "Спуск затвора как на камере Leica",
+          text: "Легкое касание фиксирует фокус, а свайп пальцем влево-вправо плавно приближает зум без рывков."
+        },
+        {
+          raw: "Рамки дисплея всего 1.15 мм (экран 6.9\")",
+          title: "Экран стал гигантским, а корпус остался прежним",
+          text: "Самый большой экран в истории iPhone, при этом телефон комфортно помещается в задний карман джинсов."
+        },
+        {
+          raw: "Чип A18 Pro 3-нм с пропускной способностью 6 ядер GPU",
+          title: "Запуск локального ИИ без облаков",
+          text: "Нейросети обрабатывают голос, переводят текст и монтируют фото прямо на устройстве в полной безопасности."
+        }
+      ],
+      stories: [
+        {
+          type: "Драма блогеров",
+          speaker: "MKBHD & Wylsacom",
+          title: "Битва мнений вокруг новой кнопки",
+          text: "Маркес Браунли заявил, что кнопка Camera Control расположена слишком высоко для удобного хвата одной рукой. Wylsacom же в своем обзоре подчеркнул, что возможность сделать снимок за долю секунды из кармана перевешивает любые эргономические компромиссы."
+        }
+      ],
+      accessories: [
+        { type: "Зарядка", name: "MagSafe Charger 25W", note: "Заряжает батарею до 50% ровно за 30 минут." },
+        { type: "Аудио", name: "AirPods Pro 2 (USB-C)", note: "Медицинский слуховой аппарат и мгновенное сопряжение." }
+      ]
+    },
+    {
+      id: "iphone-15-pro-max",
+      category: "iPhone",
+      name: "iPhone 15 Pro Max",
+      year: 2023,
+      shape: "iphone-modern",
+      tagline: "Переход на аэрокосмический титан Grade 5, Action Button и порт USB-C.",
+      colors: [
+        { name: "Natural Titanium (Натуральный титан)", hex: "#958F87" },
+        { name: "Blue Titanium (Синий титан)", hex: "#2E3644" },
+        { name: "White Titanium (Белый титан)", hex: "#E5E3DF" },
+        { name: "Black Titanium (Черный титан)", hex: "#2D2E30" }
+      ],
+      options: {
+        storage: [
+          { label: "256 ГБ", mod: 0 },
+          { label: "512 ГБ", mod: 200 },
+          { label: "1 ТБ", mod: 400 }
+        ]
+      },
+      basePrice: 1199,
+      humanSpecs: [
+        {
+          raw: "Матовая рамка из титанового сплава Grade 5",
+          title: "Минус 19 граммов: больше не режет мизинец",
+          text: "После тяжелой хирургической стали 14 Pro этот телефон ощущается в руках легким как перышко."
+        },
+        {
+          raw: "Интерфейс USB-C со скоростью передачи 10 Гбит/с",
+          title: "Один шнур на всю квартиру и запись ProRes",
+          text: "Теперь видеографы могут подключать SSD напрямую и снимать видео 4K 60fps прямо на диск."
+        }
+      ],
+      stories: [
+        {
+          type: "Инсайды",
+          speaker: "Техноблог Rozetked",
+          heading: "Истерия с перегревом на старте",
+          text: "В первую неделю блогеры жаловались на нагрев до 45 градусов. Сеть взорвалась слухами о браке титана, но Apple за 5 дней выпустила iOS 17.0.3, доказав, что баг был в коде Instagram, перегружавшем процессор."
+        }
+      ],
+      accessories: [
+        { type: "Накопитель", name: "SSD Samsung T7 Shield", note: "Съемка тяжелого ProRes видео без заполнения памяти телефона." }
+      ]
+    },
+    {
+      id: "iphone-x",
+      category: "iPhone",
+      name: "iPhone X (10-я годовщина)",
+      year: 2017,
+      shape: "iphone-modern",
+      tagline: "Главная революция: отказ от кнопки Home, рождение жестов и сканера Face ID.",
+      colors: [
+        { name: "Space Gray (Серый космос)", hex: "#35363A" },
+        { name: "Silver (Серебристый хром)", hex: "#EDEDED" }
+      ],
+      options: {
+        storage: [
+          { label: "64 ГБ", mod: 0 },
+          { label: "256 ГБ", mod: 150 }
+        ]
+      },
+      basePrice: 999,
+      humanSpecs: [
+        {
+          raw: "Super Retina OLED дисплей с вырезом Notch",
+          title: "Смерть кнопки Home и переход на свайпы",
+          text: "Смартфон научил человечество свайпать снизу вверх, чтобы свернуть приложение. Через год это повторили все производители в мире."
+        }
+      ],
+      stories: [
+        {
+          type: "Шок рынка",
+          speaker: "Тим Кук на сцене",
+          heading: "Психологический барьер в $1000",
+          text: "Когда Тим Кук объявил стартовую цену в $999, зал замер. Критики хоронили продажи, а телефон стал мировым бестселлером и открыл эпоху дорогих флагманов."
+        }
+      ],
+      accessories: [
+        { type: "Аудио", name: "Оригинальные AirPods", note: "Белые капельки, ставшие главным статусным символом конца 2010-х." }
+      ]
+    },
+    {
+      id: "iphone-5s",
+      category: "iPhone",
+      name: "iPhone 5s",
+      year: 2013,
+      shape: "iphone-classic",
+      tagline: "Сканер Touch ID в сапфировом кольце, 64-битный процессор и золотой цвет.",
+      colors: [
+        { name: "Gold (Культовый золотой)", hex: "#D4C7B5" },
+        { name: "Space Gray (Серый космос)", hex: "#5E5F63" },
+        { name: "Silver (Серебро)", hex: "#E2E3E5" }
+      ],
+      options: {
+        storage: [
+          { label: "16 ГБ", mod: 0 },
+          { label: "32 ГБ", mod: 100 },
+          { label: "64 ГБ", mod: 200 }
+        ]
+      },
+      basePrice: 649,
+      humanSpecs: [
+        {
+          raw: "Сканер отпечатков пальцев Touch ID",
+          title: "Конец эпохи ввода PIN-кода",
+          text: "Достаточно коснуться круглой кнопки, и телефон мгновенно разблокирован."
+        }
+      ],
+      stories: [
+        {
+          type: "Ажиотаж",
+          speaker: "Очереди в Нью-Йорке и Токио",
+          heading: "Золотая лихорадка у перекупщиков",
+          text: "Первую золотую версию спекулянты продавали на выходе из магазинов по $2000–$2500 из-за дикого дефицита."
+        }
+      ],
+      accessories: [
+        { type: "Чехол", name: "Apple Leather Case", note: "Натуральная кожа, которая со временем красиво винтажно темнела." }
+      ]
+    },
+    {
+      id: "iphone-4",
+      category: "iPhone",
+      name: "iPhone 4",
+      year: 2010,
+      shape: "iphone-classic",
+      tagline: "Стекло и сталь, экраны Retina и видеосвязь FaceTime.",
+      colors: [
+        { name: "Black (Черный)", hex: "#16171A" },
+        { name: "White (Белый — задержался на 10 мес.)", hex: "#F3F4F6" }
+      ],
+      options: {
+        storage: [
+          { label: "16 ГБ", mod: 0 },
+          { label: "32 ГБ", mod: 100 }
+        ]
+      },
+      basePrice: 599,
+      humanSpecs: [
+        {
+          raw: "Экран Retina 326 пикселей на дюйм",
+          title: "Пиксели впервые растворились для глаза",
+          text: "Текст на экране стал выглядеть так же четко, как на странице дорогого глянцевого журнала."
+        }
+      ],
+      stories: [
+        {
+          type: "Скандал",
+          speaker: "Стив Джобс (Antennagate)",
+          heading: "«Вы просто неправильно его держите!»",
+          text: "Стальная рамка служила антенной. Если взять телефон голой ладонью за нижний стык, сигнал падал. Джобс посоветовал не держать его так и бесплатно раздал бамперы всем покупателям."
+        }
+      ],
+      accessories: [
+        { type: "Защита", name: "Apple Bumper Case", note: "Резиновая рамка, спасавшая стальную антенну от замыкания рукой." }
+      ]
+    },
+
+    // --- MACBOOK ---
+    {
+      id: "macbook-pro-16-m3",
+      category: "MacBook",
+      name: "MacBook Pro 16\" (M3 Max)",
+      year: 2023,
+      shape: "macbook-pro",
+      tagline: "Бескомпромиссная портативная киностудия в глубоком черном цвете Space Black.",
+      colors: [
+        { name: "Space Black (Черный космос)", hex: "#222326" },
+        { name: "Silver (Классическое серебро)", hex: "#D3D5D9" }
+      ],
+      options: {
+        chip: [
+          { label: "M3 Pro (12 CPU / 18 GPU)", mod: 0, sub: "Монтаж и код" },
+          { label: "M3 Max (14 CPU / 30 GPU)", mod: 400, sub: "Тяжелый 3D рендер" },
+          { label: "M3 Max (16 CPU / 40 GPU)", mod: 900, sub: "Максимальный чип" }
+        ],
+        ram: [
+          { label: "36 ГБ Unified", mod: 0, sub: "Базовая" },
+          { label: "48 ГБ Unified", mod: 200, sub: "Оптимальная" },
+          { label: "64 ГБ Unified", mod: 400, sub: "Для монтажа 8K" },
+          { label: "128 ГБ Unified", mod: 1000, sub: "Локальный запуск нейросетей" }
+        ],
+        storage: [
+          { label: "1 ТБ SSD", mod: 0 },
+          { label: "2 ТБ SSD", mod: 400 },
+          { label: "4 ТБ SSD", mod: 1000 },
+          { label: "8 ТБ SSD", mod: 2200 }
+        ],
+        displayGlass: [
+          { label: "Стандартный глянец", mod: 0, sub: "Сочный контраст" },
+          { label: "Nano-texture (Нанотекстура)", mod: 150, sub: "Гашение бликов на солнце" }
+        ]
+      },
+      basePrice: 2899,
+      humanSpecs: [
+        {
+          raw: "Дисплей Liquid Retina XDR mini-LED 1600 нит",
+          title: "Черный цвет как при выключенном свете",
+          text: "Тысячи микро-диодов гаснут полностью в тенях — можно красить голливудские фильмы в парке на солнце."
+        },
+        {
+          raw: "128 ГБ единой памяти с шиной 400 ГБ/с",
+          title: "Запуск локальных LLM уровня ChatGPT в самолете",
+          text: "Видеокарта и процессор черпают память из одного пула без медленной перекачки файлов."
+        }
+      ],
+      stories: [
+        {
+          type: "Признание ошибок",
+          speaker: "Творческое комьюнити",
+          heading: "Возвращение портов и отмена Touch Bar",
+          text: "После пяти лет мучений с переходниками Apple вернула профессионалам слот для SD-карт, HDMI и магнитный провод MagSafe, убрав ненавистную сенсорную полоску."
+        }
+      ],
+      accessories: [
+        { type: "Монитор", name: "Apple Studio Display 27\" 5K", note: "Один кабель заряжает ноутбук и дает студийную картинку 5K." }
+      ]
+    },
+    {
+      id: "macbook-air-m3",
+      category: "MacBook",
+      name: "MacBook Air 13\" (M3)",
+      year: 2024,
+      shape: "macbook-air",
+      tagline: "Бесшумный ультрабук с пассивным охлаждением и 18 часами автономности.",
+      colors: [
+        { name: "Midnight (Глубокая полночь)", hex: "#1F2633" },
+        { name: "Starlight (Сияющая звезда)", hex: "#E8DED1" },
+        { name: "Space Gray (Космический серый)", hex: "#636569" },
+        { name: "Silver (Серебристый)", hex: "#D7D9DC" }
+      ],
+      options: {
+        chip: [
+          { label: "M3 (8 CPU / 8 GPU)", mod: 0, sub: "Базовый" },
+          { label: "M3 (8 CPU / 10 GPU)", mod: 100, sub: "Усиленный" }
+        ],
+        ram: [
+          { label: "8 ГБ", mod: 0, sub: "Базовая" },
+          { label: "16 ГБ", mod: 200, sub: "Комфортная" },
+          { label: "24 ГБ", mod: 400, sub: "Топовая" }
+        ],
+        storage: [
+          { label: "256 ГБ SSD", mod: 0 },
+          { label: "512 ГБ SSD", mod: 200 },
+          { label: "1 ТБ SSD", mod: 400 },
+          { label: "2 ТБ SSD", mod: 800 }
+        ]
+      },
+      basePrice: 1099,
+      humanSpecs: [
+        {
+          raw: "Конструкция Fanless (без вентиляторов)",
+          title: "Полная тишина в кровати",
+          text: "Внутри нет ни одного кулера — ноутбук не шумит под нагрузкой и никогда не забьется кошачьей шерстью."
+        }
+      ],
+      stories: [
+        {
+          type: "Инженерия",
+          speaker: "Dave2D & Wylsacom",
+          heading: "Победа над жирными отпечатками",
+          text: "Темный цвет Midnight на М2 пачкался за секунды. В М3 применили анодированное уплотнение алюминия, навсегда решив проблему следов пальцев."
+        }
+      ],
+      accessories: [
+        { type: "Мышь", name: "Magic Mouse Black", note: "Сенсорная стеклянная поверхность с поддержкой всех жестов macOS." }
+      ]
+    },
+
+    // --- MAC (ДЕСКТОПЫ) ---
+    {
+      id: "mac-studio-m2-ultra",
+      category: "Mac",
+      name: "Mac Studio (M2 Ultra)",
+      year: 2023,
+      shape: "mac-studio",
+      tagline: "Алюминиевый монолит на столе, разрывающий громоздкие серверные стойки.",
+      colors: [
+        { name: "Silver Aluminum", hex: "#C7C9CC" }
+      ],
+      options: {
+        chip: [
+          { label: "M2 Ultra (24 CPU / 60 GPU)", mod: 0, sub: "Базовый Ultra" },
+          { label: "M2 Ultra (24 CPU / 76 GPU)", mod: 1000, sub: "Экстремальный чип" }
+        ],
+        ram: [
+          { label: "64 ГБ ОЗУ", mod: 0, sub: "База" },
+          { label: "128 ГБ ОЗУ", mod: 800, sub: "Студийная" },
+          { label: "192 ГБ ОЗУ", mod: 1600, sub: "Кластер ИИ" }
+        ],
+        storage: [
+          { label: "1 ТБ SSD", mod: 0 },
+          { label: "2 ТБ SSD", mod: 400 },
+          { label: "4 ТБ SSD", mod: 1000 },
+          { label: "8 ТБ SSD", mod: 2200 }
+        ]
+      },
+      basePrice: 3999,
+      humanSpecs: [
+        {
+          raw: "Архитектура UltraFusion (два склеенных M2 Max)",
+          title: "Крутит 22 потока 8K видео одновременно",
+          text: "Два чипа соединены кремниевым мостом со скоростью 2.5 ТБ/с и работают как один гигантский процессор."
+        }
+      ],
+      stories: [
+        {
+          type: "Эксперимент",
+          speaker: "IT-блогер Jeff Geerling",
+          heading: "Мини-кластеры вместо серверов за миллионы",
+          text: "Благодаря объединенной памяти до 192 ГБ инженеры начали объединять по 4 Mac Studio в единую сеть, обучая языковые модели дома без шума серверной."
+        }
+      ],
+      accessories: [
+        { type: "Клавиатура", name: "Magic Keyboard with Touch ID", note: "Вход в учетную запись по отпечатку пальца на столе." },
+        { type: "Трекпад", name: "Magic Trackpad Black", note: "Огромная сенсорная панель для жестов монтажа." }
+      ]
+    },
+    {
+      id: "mac-pro-2013",
+      category: "Mac",
+      name: "Mac Pro («Ведро» 2013)",
+      year: 2013,
+      shape: "mac-pro-cylinder",
+      tagline: "Черный глянцевый цилиндр, спроектированный вокруг единого треугольного радиатора.",
+      colors: [
+        { name: "Polished Glossy Black", hex: "#18181A" }
+      ],
+      options: {
+        chip: [
+          { label: "Intel Xeon 4 ядра", mod: 0, sub: "Базовый" },
+          { label: "Intel Xeon 8 ядер", mod: 500, sub: "Профи" },
+          { label: "Intel Xeon 12 ядер", mod: 1200, sub: "Максимальный" }
+        ],
+        ram: [
+          { label: "16 ГБ ECC DDR3", mod: 0, sub: "Базовая" },
+          { label: "32 ГБ ECC DDR3", mod: 300, sub: "Рабочая" },
+          { label: "64 ГБ ECC DDR3", mod: 800, sub: "Рендер" }
+        ],
+        storage: [
+          { label: "256 ГБ PCIe SSD", mod: 0 },
+          { label: "512 ГБ PCIe SSD", mod: 200 },
+          { label: "1 ТБ PCIe SSD", mod: 500 }
+        ]
+      },
+      basePrice: 2999,
+      humanSpecs: [
+        {
+          raw: "Unified Thermal Core (треугольный радиатор охлаждения)",
+          title: "Компьютер размером с вазу для цветов",
+          text: "Вместо огромного пыльного ящика под ногами на столе стоял арт-объект с одним бесшумным вентилятором."
+        }
+      ],
+      stories: [
+        {
+          type: "Драма Apple",
+          speaker: "Фил Шиллер & Крейг Федериги",
+          heading: "«Can't innovate anymore, my ass!» и тупик",
+          text: "Шиллер дерзко крикнул эту фразу на презентации. Но ставка на две слабые видеокарты оказалась фатальной: индустрия пошла по пути одной сверхмощной и горячей карты, которую цилиндр не мог охладить, и линейку закрыли."
+        }
+      ],
+      accessories: [
+        { type: "Монитор", name: "Apple Cinema Display 27\"", note: "Классический широкоформатный стеклянный монитор." }
+      ]
+    },
+
+    // --- IPAD ---
+    {
+      id: "ipad-pro-13-m4",
+      category: "iPad",
+      name: "iPad Pro 13\" (M4)",
+      year: 2024,
+      shape: "ipad-pro",
+      tagline: "Самое тонкое устройство Apple за всю историю с революционным Tandem OLED экраном.",
+      colors: [
+        { name: "Space Black (Черный космос)", hex: "#28292C" },
+        { name: "Silver (Серебристый)", hex: "#DFE0E4" }
+      ],
+      options: {
+        ram: [
+          { label: "8 ГБ ОЗУ", mod: 0, sub: "Для 256/512 ГБ" },
+          { label: "16 ГБ ОЗУ", mod: 300, sub: "Для 1/2 ТБ (все ядра)" }
+        ],
+        storage: [
+          { label: "256 ГБ", mod: 0 },
+          { label: "512 ГБ", mod: 200 },
+          { label: "1 ТБ", mod: 600 },
+          { label: "2 ТБ", mod: 1000 }
+        ],
+        displayGlass: [
+          { label: "Стандартный глянец", mod: 0, sub: "Сверхконтрастный" },
+          { label: "Нанотекстура (Nano-texture)", mod: 100, sub: "Матовое стекло для рисования" }
+        ],
+        connectivity: [
+          { label: "Только Wi-Fi", mod: 0, sub: "Для дома и офиса" },
+          { label: "Wi-Fi + Cellular 5G", mod: 200, sub: "Сим-карта в дороге" }
+        ]
+      },
+      basePrice: 1299,
+      humanSpecs: [
+        {
+          raw: "Толщина корпуса 5.1 мм при весе 579 граммов",
+          title: "Тоньше плеера iPod nano",
+          text: "Когда держишь в руках этот 13-дюймовый лист металла, не верится, что процессор внутри мощнее ПК."
+        },
+        {
+          raw: "Tandem OLED (два спаренных OLED слоя)",
+          title: "Ослепительная яркость 1000 нит без выгорания",
+          text: "Два экрана светят один сквозь другой, создавая эталонную картинку для художников и колористов."
+        }
+      ],
+      stories: [
+        {
+          type: "Скандал",
+          speaker: "Творческое комьюнити мира",
+          heading: "Рекламный ролик «Crush!» под прессом",
+          text: "В рекламе гидравлический пресс раздавил гитары, пианино, краски и скульптуры, превратив их в iPad. Творцы сочли это оскорблением искусства. Apple пришлось публично извиниться."
+        }
+      ],
+      accessories: [
+        { type: "Стилус", name: "Apple Pencil Pro", note: "Тактильный отклик при сжатии и распознавание вращения кисти." },
+        { type: "Клавиатура", name: "Magic Keyboard Aluminum", note: "Превращает планшет в ноутбук с металлическим топкейсом." }
+      ]
+    },
+
+    // --- WATCH ---
+    {
+      id: "watch-ultra-2",
+      category: "Watch",
+      name: "Apple Watch Ultra 2",
+      year: 2024,
+      shape: "watch-ultra",
+      tagline: "Титановый наручный компьютер для марафонов и погружений на 40 метров.",
+      colors: [
+        { name: "Black Titanium (Черный титан)", hex: "#222325" },
+        { name: "Natural Titanium (Натуральный титан)", hex: "#9B968E" }
+      ],
+      options: {
+        storage: [
+          { label: "64 ГБ + GPS + 4G", mod: 0, sub: "Корпус 49 мм" }
+        ],
+        connectivity: [
+          { label: "Ремешок Alpine Loop", mod: 0, sub: "Тканевый для гор" },
+          { label: "Ремешок Trail Loop", mod: 0, sub: "Эластичный для бега" },
+          { label: "Ремешок Ocean Band", mod: 0, sub: "Фторэластомер для дайвинга" },
+          { label: "Титановый миланский браслет", mod: 100, sub: "Премиальное плетение" }
+        ]
+      },
+      basePrice: 799,
+      humanSpecs: [
+        {
+          raw: "Пиковая яркость экрана 3000 нит",
+          title: "Видно сквозь бурю в пустыне",
+          text: "Дисплей светит так ярко, что ночью в палатке заменяет полноценный фонарь."
+        },
+        {
+          raw: "Сертифицированный глубоководный дайв-компьютер",
+          title: "Автоматический запуск под водой",
+          text: "Погружаетесь в море — часы сами показывают глубину, температуру и график декомпрессии."
+        }
+      ],
+      stories: [
+        {
+          type: "Судебная драма",
+          speaker: "Патентная война с Masimo",
+          heading: "Блокировка пульсоксиметра в США",
+          text: "Из-за иска медкомпании Masimo власти США запретили продавать часы с измерением кислорода в крови. Apple была вынуждена программно вырезать эту фишку для американского рынка."
+        }
+      ],
+      accessories: [
+        { type: "Зарядка", name: "Плетеный магнитный кабель Fast Charge", note: "Быстрая зарядка за 45 минут." }
+      ]
+    },
+
+    // --- AUDIO ---
+    {
+      id: "airpods-max",
+      category: "Audio",
+      name: "AirPods Max (USB-C)",
+      year: 2024,
+      shape: "airpods-max",
+      tagline: "Студийный звук в чашках из цельного анодированного алюминия с сетчатым оголовьем.",
+      colors: [
+        { name: "Midnight (Полночь)", hex: "#1F232B" },
+        { name: "Starlight (Сияющая звезда)", hex: "#E9DFD3" },
+        { name: "Blue (Небесно-синий)", hex: "#4B6079" },
+        { name: "Purple (Фиолетовый)", hex: "#63586B" },
+        { name: "Orange (Сочный оранжевый)", hex: "#D66B4E" }
+      ],
+      options: {
+        storage: [
+          { label: "USB-C Edition", mod: 0, sub: "Lossless звук при проводе" }
+        ]
+      },
+      basePrice: 549,
+      humanSpecs: [
+        {
+          raw: "Шумоподавление на чипах H1 в каждой чашке",
+          title: "Стирает рев турбин реактивного самолета",
+          text: "Микрофоны слушают шум вокруг 200 раз в секунду и гасят его встречной звуковой волной."
+        }
+      ],
+      stories: [
+        {
+          type: "Мем индустрии",
+          speaker: "Все техноблогеры интернета",
+          heading: "Чехол Smart Case, похожий на женский лифчик",
+          text: "Комплектный чехол вызвал миллионы шуток в сети за форму женского белья. К тому же наушники не имели кнопки выключения и засыпали только внутри этого чехла."
+        }
+      ],
+      accessories: [
+        { type: "Кабель", name: "Apple Lightning to 3.5mm", note: "Подключение к аналоговым пультам и аппаратуре в самолетах." }
+      ]
+    },
+
+    // --- VISION ---
+    {
+      id: "apple-vision-pro",
+      category: "Vision",
+      name: "Apple Vision Pro",
+      year: 2024,
+      shape: "vision-pro",
+      tagline: "Первый пространственный компьютер: приложения парят прямо в вашей комнате.",
+      colors: [
+        { name: "Curved Glass & Aluminum", hex: "#787C83" }
+      ],
+      options: {
+        storage: [
+          { label: "256 ГБ", mod: 0 },
+          { label: "512 ГБ", mod: 200 },
+          { label: "1 ТБ", mod: 400 }
+        ],
+        displayGlass: [
+          { label: "Без оптических вставок", mod: 0, sub: "Для 100% зрения" },
+          { label: "Линзы ZEISS Optical Inserts", mod: 149, sub: "Магнитные вставки с диоптриями" }
+        ]
+      },
+      basePrice: 3499,
+      humanSpecs: [
+        {
+          raw: "Micro-OLED экраны на 23 миллиона пикселей (больше 4K на глаз)",
+          title: "Личный кинотеатр размером с пятиэтажку",
+          text: "Окна браузера и фильмы висят в воздухе вашей спальни, отбрасывая тени на стены и ковер."
+        },
+        {
+          raw: "Трекинг глаз и управление щелчком пальцев",
+          title: "Управление взглядом без джойстиков",
+          text: "Смотрите на кнопку и просто смыкаете большой и указательный пальцы на коленях."
+        }
+      ],
+      stories: [
+        {
+          type: "Хайп",
+          speaker: "Кейси Нейстат (Casey Neistat)",
+          heading: "Поездка на скейте по метро Нью-Йорка",
+          text: "Блогер Кейси провел день в шлеме на улицах Манхэттена, заказывая кофе и переходя перекрестки. Ролик собрал 15 млн просмотров за 48 часов."
+        }
+      ],
+      accessories: [
+        { type: "Кейс", name: "Vision Pro Travel Case", note: "Футуристичный белый скафандр для переноски в самолете." }
+      ]
+    },
+
+    // --- RETRO & ЛЕГЕНДЫ ---
+    {
+      id: "ipod-classic-2001",
+      category: "Retro",
+      name: "iPod Classic (Original 2001)",
+      year: 2001,
+      shape: "ipod-classic",
+      tagline: "«1000 песен у вас в кармане» — плеер, спасший Apple и изменивший музыку навсегда.",
+      colors: [
+        { name: "White Plastic & Polished Steel", hex: "#ECECEE" }
+      ],
+      options: {
+        storage: [
+          { label: "5 ГБ (1000 песен)", mod: 0 },
+          { label: "10 ГБ (2000 песен)", mod: 100 }
+        ]
+      },
+      basePrice: 399,
+      humanSpecs: [
+        {
+          raw: "Механическое колесо прокрутки Scroll Wheel",
+          title: "Мгновенный выбор песни одним большим пальцем",
+          text: "Колесо физически вращалось под пальцем, издавая приятные щелчки при быстром скролле списка."
+        }
+      ],
+      stories: [
+        {
+          type: "История",
+          speaker: "Стив Джобс (Презентация 2001)",
+          heading: "«1000 songs in your pocket»",
+          text: "Джобс достал из кармана джинсов маленькую белую коробочку. Этот день похоронил кассеты и CD-диски, сделав iTunes мировым монополистом музыки."
+        }
+      ],
+      accessories: [
+        { type: "Кабель", name: "Apple FireWire Cable 400", note: "Закачивал целый музыкальный альбом на плеер за 10 секунд." }
+      ]
+    },
+    {
+      id: "imac-g3-1998",
+      category: "Retro",
+      name: "iMac G3 (Bondi Blue)",
+      year: 1998,
+      shape: "imac-g3",
+      tagline: "Полупрозрачный моноблок в цвете морской волны, спасший корпорацию от банкротства.",
+      colors: [
+        { name: "Bondi Blue (Морская волна Сиднея)", hex: "#00838F" },
+        { name: "Ruby (Рубиновый)", hex: "#9E1B32" },
+        { name: "Tangerine (Мандариновый)", hex: "#FF8C00" },
+        { name: "Lime (Лаймовый)", hex: "#32CD32" }
+      ],
+      options: {
+        storage: [
+          { label: "4 ГБ HDD", mod: 0 },
+          { label: "6 ГБ HDD", mod: 100 }
+        ]
+      },
+      basePrice: 1299,
+      humanSpecs: [
+        {
+          raw: "Отказ от флоппи-дисководов и переход на USB",
+          title: "Джобс убил дискеты и внедрил USB",
+          text: "Компьютерные гики возмущались отсутствием привода для дискет, но именно этот моноблок сделал стандарт USB всемирным."
+        }
+      ],
+      stories: [
+        {
+          type: "Дизайнерский провал",
+          speaker: "Джони Айв",
+          heading: "Круглая мышь «Хоккейная шайба»",
+          text: "В комплекте шла абсолютно круглая мышь. На ощупь было невозможно понять, где у неё верх, и курсор улетал в угол. Пользователи её ненавидели."
+        }
+      ],
+      accessories: [
+        { type: "Клавиатура", name: "Apple USB Keyboard Translucent", note: "Прозрачный пластик, сквозь который видны микросхемы." }
+      ]
+    },
+    {
+      id: "macbook-air-2008",
+      category: "Retro",
+      name: "MacBook Air (Original 2008)",
+      year: 2008,
+      shape: "macbook-air",
+      tagline: "Культовый ультрабук, который Стив Джобс достал на сцене из бумажного конверта.",
+      colors: [
+        { name: "Silver Anodized Aluminum", hex: "#CFD0D3" }
+      ],
+      options: {
+        storage: [
+          { label: "80 ГБ HDD (1.8\")", mod: 0 },
+          { label: "64 ГБ SSD (космически дорогой)", mod: 999 }
+        ]
+      },
+      basePrice: 1799,
+      humanSpecs: [
+        {
+          raw: "Толщина всего 4 мм в тонкой части корпуса",
+          title: "Шок для индустрии тяжелых пластиковых гробов",
+          text: "В эпоху, когда ноутбуки весили по 4 кг, Джобс показал компьютер, помещающийся в офисную папку для документов."
+        }
+      ],
+      stories: [
+        {
+          type: "Легенда",
+          speaker: "Стив Джобс на Macworld 2008",
+          heading: "Желтый почтовый конверт",
+          text: "Джобс вышел на сцену с неприметным желтым конвертом для бумаг на веревочке, распечатал его и вытащил тончайший работающий ноутбук под аплодисменты зала."
+        }
+      ],
+      accessories: [
+        { type: "Привод", name: "Apple USB SuperDrive", note: "Внешний дисковод для CD/DVD, так как внутри ноутбука места для него не было." }
+      ]
+    }
+  ];
+
+  // SVG-ОТРИСОВКА МОДЕЛЕЙ БЕЗ КУРСОРНЫХ БЛИКОВ
+  function drawDeviceVector(shape, colorHex) {
+    if (shape === "iphone-modern") {
+      return `
+        <svg viewBox="0 0 200 300" width="190" height="280">
+          <rect x="25" y="10" width="150" height="280" rx="36" fill="${colorHex}" stroke="rgba(255,255,255,0.25)" stroke-width="2.5"/>
+          <rect x="36" y="22" width="62" height="62" rx="16" fill="${colorHex}" filter="brightness(0.85)" stroke="rgba(255,255,255,0.2)"/>
+          <circle cx="53" cy="38" r="11" fill="#0d0e12" stroke="#555" stroke-width="2"/>
+          <circle cx="53" cy="68" r="11" fill="#0d0e12" stroke="#555" stroke-width="2"/>
+          <circle cx="81" cy="53" r="11" fill="#0d0e12" stroke="#555" stroke-width="2"/>
+          <circle cx="100" cy="150" r="12" fill="rgba(255,255,255,0.2)"/>
+        </svg>`;
+    }
+    if (shape === "iphone-classic") {
+      return `
+        <svg viewBox="0 0 200 300" width="180" height="270">
+          <rect x="30" y="15" width="140" height="270" rx="22" fill="#888c94" stroke="#cfd2d6" stroke-width="2"/>
+          <rect x="35" y="20" width="130" height="260" rx="18" fill="${colorHex}"/>
+          <rect x="44" y="55" width="112" height="180" fill="#0c0e14" stroke="rgba(255,255,255,0.1)"/>
+          <circle cx="100" cy="256" r="12" fill="none" stroke="#777" stroke-width="1.5"/>
+        </svg>`;
+    }
+    if (shape === "macbook-pro" || shape === "macbook-air") {
+      return `
+        <svg viewBox="0 0 320 220" width="300" height="200">
+          <rect x="40" y="25" width="240" height="150" rx="12" fill="#0d0e12" stroke="${colorHex}" stroke-width="4"/>
+          <rect x="135" y="27" width="50" height="7" rx="3" fill="#050507"/>
+          <path d="M15 175 L305 175 L290 192 Q285 195 275 195 L45 195 Q35 195 30 192 Z" fill="${colorHex}" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+        </svg>`;
+    }
+    if (shape === "mac-studio") {
+      return `
+        <svg viewBox="0 0 260 200" width="240" height="180">
+          <rect x="40" y="35" width="180" height="120" rx="20" fill="${colorHex}" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+          <rect x="80" y="120" width="14" height="6" rx="2" fill="#111"/>
+          <rect x="105" y="120" width="14" height="6" rx="2" fill="#111"/>
+          <rect x="140" y="121" width="35" height="4" rx="2" fill="#111"/>
+        </svg>`;
+    }
+    if (shape === "mac-pro-cylinder") {
+      return `
+        <svg viewBox="0 0 200 240" width="170" height="210">
+          <rect x="50" y="30" width="100" height="170" rx="30" fill="${colorHex}" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+          <ellipse cx="100" cy="35" rx="48" ry="14" fill="#0a0a0c" stroke="#444"/>
+        </svg>`;
+    }
+    if (shape === "ipad-pro") {
+      return `
+        <svg viewBox="0 0 240 300" width="210" height="270">
+          <rect x="25" y="15" width="190" height="270" rx="18" fill="${colorHex}" stroke="rgba(255,255,255,0.25)" stroke-width="2.5"/>
+          <rect x="33" y="23" width="174" height="254" rx="12" fill="#090a0f"/>
+        </svg>`;
+    }
+    if (shape === "watch-ultra") {
+      return `
+        <svg viewBox="0 0 200 240" width="180" height="220">
+          <rect x="45" y="40" width="110" height="150" rx="32" fill="${colorHex}" stroke="rgba(255,255,255,0.3)" stroke-width="3"/>
+          <rect x="55" y="50" width="90" height="130" rx="22" fill="#08090d"/>
+          <rect x="36" y="85" width="6" height="35" rx="3" fill="#ff6b22"/>
+          <rect x="157" y="70" width="9" height="35" rx="4" fill="#666"/>
+        </svg>`;
+    }
+    if (shape === "airpods-max") {
+      return `
+        <svg viewBox="0 0 260 260" width="220" height="220">
+          <path d="M40 140 C40 40, 220 40, 220 140" fill="none" stroke="#888" stroke-width="8"/>
+          <rect x="20" y="130" width="45" height="75" rx="22" fill="${colorHex}" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+          <rect x="195" y="130" width="45" height="75" rx="22" fill="${colorHex}" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+        </svg>`;
+    }
+    if (shape === "vision-pro") {
+      return `
+        <svg viewBox="0 0 300 180" width="270" height="160">
+          <rect x="20" y="40" width="260" height="95" rx="46" fill="#111317" stroke="${colorHex}" stroke-width="3"/>
+          <ellipse cx="150" cy="87" rx="115" ry="38" fill="#1f2533"/>
+        </svg>`;
+    }
+    if (shape === "imac-g3") {
+      return `
+        <svg viewBox="0 0 240 220" width="220" height="200">
+          <path d="M40 170 C40 60, 200 60, 200 170 Z" fill="${colorHex}" opacity="0.85" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+          <rect x="55" y="65" width="130" height="95" rx="10" fill="#e6e8ec"/>
+          <rect x="65" y="75" width="110" height="75" rx="4" fill="#0d1117"/>
+        </svg>`;
+    }
+    // iPod Classic
+    return `
+      <svg viewBox="0 0 180 260" width="160" height="230">
+        <rect x="25" y="15" width="130" height="230" rx="16" fill="${colorHex}" stroke="#ccc" stroke-width="2"/>
+        <rect x="35" y="28" width="110" height="85" rx="6" fill="#889688" stroke="#555"/>
+        <circle cx="90" cy="175" r="42" fill="#dedede" stroke="#bbb" stroke-width="1.5"/>
+        <circle cx="90" cy="175" r="16" fill="#fff"/>
+      </svg>`;
+  }
+
+  let selectedCategory = "all";
+  let activeGadget = null;
+  let customState = {};
+  let currentCounterPrice = 0;
+
+  // ОБНОВЛЕНИЕ БЕГУНКА В МЕНЮ
+  function moveNavGlider(buttonElement) {
+    const glider = document.getElementById("nav-glider");
+    glider.style.width = `${buttonElement.offsetWidth}px`;
+    glider.style.left = `${buttonElement.offsetLeft}px`;
+  }
+
+  // РЕНДЕР КАТАЛОГА С 3D TILT (БЕЗ БЕЛОГО ПЯТНА)
+  function renderCatalogView() {
+    const grid = document.getElementById("catalog-grid");
+    const query = document.getElementById("catalog-search").value.toLowerCase().trim();
+    grid.innerHTML = "";
+
+    const items = fullAppleCatalog.filter(item => {
+      const matchCat = selectedCategory === "all" || item.category === selectedCategory;
+      const matchSearch = item.name.toLowerCase().includes(query) ||
+                          item.tagline.toLowerCase().includes(query) ||
+                          item.stories.some(s => s.title.toLowerCase().includes(query) || s.text.toLowerCase().includes(query));
+      return matchCat && matchSearch;
+    });
+
+    items.forEach((gadget, i) => {
+      const card = document.createElement("div");
+      card.className = "gadget-card";
+      card.style.setProperty("--delay", i);
+
+      const dotsHtml = gadget.colors.map(c => `<span class="swatch-pip" style="background:${c.hex}" title="${c.name}"></span>`).join("");
+
+      card.innerHTML = `
+        <div>
+          <div class="card-top-bar">
+            <span class="card-category-badge">${gadget.category}</span>
+            <span class="card-era-year">${gadget.year}</span>
+          </div>
+          <div class="card-art-box">
+            ${drawDeviceVector(gadget.shape, gadget.colors[0].hex)}
+          </div>
+          <h3 class="card-model-title">${gadget.name}</h3>
+          <p class="card-model-tagline">${gadget.tagline}</p>
+        </div>
+        <div class="card-bottom-bar">
+          <div class="color-dots-line">${dotsHtml}</div>
+          <span class="explore-btn">Изучить и собрать →</span>
+        </div>
+      `;
+
+      // 3D-наклон за мышкой (без паразитного белого пятна)
+      card.addEventListener("mousemove", e => {
+        const r = card.getBoundingClientRect();
+        const x = e.clientX - r.left;
+        const y = e.clientY - r.top;
+        const rotY = ((x / r.width) - 0.5) * 12;
+        const rotX = ((y / r.height) - 0.5) * -12;
+        card.style.transform = `perspective(900px) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+      });
+
+      card.addEventListener("mouseleave", () => {
+        card.style.transform = `perspective(900px) rotateX(0deg) rotateY(0deg)`;
+      });
+
+      card.addEventListener("click", () => enterShowroom(gadget.id));
+      grid.appendChild(card);
+    });
+  }
+
+  // ВХОД В ШОУРУМ УСТРОЙСТВА
+  function enterShowroom(deviceId) {
+    const gadget = fullAppleCatalog.find(g => g.id === deviceId);
+    if (!gadget) return;
+    activeGadget = gadget;
+
+    customState = {
+      color: gadget.colors[0],
+      storage: gadget.options.storage ? gadget.options.storage[0] : null,
+      chip: gadget.options.chip ? gadget.options.chip[0] : null,
+      ram: gadget.options.ram ? gadget.options.ram[0] : null,
+      displayGlass: gadget.options.displayGlass ? gadget.options.displayGlass[0] : null,
+      connectivity: gadget.options.connectivity ? gadget.options.connectivity[0] : null
+    };
+
+    document.getElementById("catalog-view").style.display = "none";
+    const detail = document.getElementById("detail-view");
+    detail.style.display = "block";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    document.getElementById("dock-eyebrow").textContent = `${gadget.category} · Год релиза ${gadget.year}`;
+    document.getElementById("dock-title").textContent = gadget.name;
+    document.getElementById("dock-tagline").textContent = gadget.tagline;
+
+    // 1. Цвета корпуса
+    buildColorSwatches();
+
+    // 2. Стекла экрана
+    buildOptionRow("grp-glass", "chips-glass", "lbl-glass", gadget.options.displayGlass, "displayGlass");
+
+    // 3. Процессоры
+    buildOptionRow("grp-chip", "chips-chip", "lbl-chip", gadget.options.chip, "chip");
+
+    // 4. ОЗУ
+    buildOptionRow("grp-ram", "chips-ram", "lbl-ram", gadget.options.ram, "ram");
+
+    // 5. Накопитель
+    buildOptionRow("grp-storage", "chips-storage", "lbl-storage", gadget.options.storage, "storage");
+
+    // 6. Связь / Ремешок
+    buildOptionRow("grp-conn", "chips-conn", "lbl-conn", gadget.options.connectivity, "connectivity");
+
+    // Расчет цены и покраска сцены
+    updateShowroomStage(gadget.colors[0]);
+    recalculateTotalPrice();
+
+    // Характеристики на человеческом языке
+    const specMount = document.getElementById("specs-mount");
+    specMount.innerHTML = gadget.humanSpecs.map(sp => `
+      <div class="spec-story-card">
+        <div class="spec-raw-text">${sp.raw}</div>
+        <div class="spec-human-headline">${sp.title}</div>
+        <div class="spec-human-body">${sp.text}</div>
+      </div>
+    `).join("");
+
+    // Истории и закулисье
+    const loreMount = document.getElementById("lore-mount");
+    loreMount.innerHTML = gadget.stories.map(st => `
+      <div class="lore-block">
+        <div class="lore-meta-row">
+          <span class="lore-type-tag">${st.type}</span>
+          <span class="lore-speaker">Спикер: ${st.speaker}</span>
+        </div>
+        <h4 class="lore-title">${st.title}</h4>
+        <p class="lore-content">${st.text}</p>
+      </div>
+    `).join("");
+
+    // Аксессуары
+    const ecoMount = document.getElementById("eco-mount");
+    ecoMount.innerHTML = gadget.accessories.map(ac => `
+      <div class="accessory-item">
+        <div>
+          <div class="acc-type-pill">${ac.type}</div>
+          <div class="acc-name-text">${ac.name}</div>
+        </div>
+        <p class="acc-note-text">${ac.note}</p>
+      </div>
+    `).join("");
+  }
+
+  // РЕНДЕР ЦВЕТОВ
+  function buildColorSwatches() {
+    const wrap = document.getElementById("swatches-dock");
+    wrap.innerHTML = "";
+    activeGadget.colors.forEach((col, idx) => {
+      const btn = document.createElement("button");
+      btn.className = `color-button ${idx === 0 ? "active" : ""}`;
+      btn.style.background = col.hex;
+      btn.title = col.name;
+      btn.onclick = () => {
+        document.querySelectorAll(".color-button").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        customState.color = col;
+        updateShowroomStage(col);
+      };
+      wrap.appendChild(btn);
+    });
+  }
+
+  function updateShowroomStage(col) {
+    document.getElementById("stage-color-txt").textContent = col.name;
+    document.getElementById("lbl-color").textContent = `— ${col.name}`;
+    document.getElementById("ambient-aura").style.background = `radial-gradient(circle, ${col.hex} 0%, transparent 70%)`;
+    document.getElementById("studio-stage").style.setProperty("--stage-ambient", `${col.hex}44`);
+
+    const stageEl = document.getElementById("studio-svg-display");
+    stageEl.classList.add("pulse");
+    stageEl.innerHTML = drawDeviceVector(activeGadget.shape, col.hex);
+    setTimeout(() => stageEl.classList.remove("pulse"), 350);
+  }
+
+  // РЕНДЕР ПАРАМЕТРОВ
+  function buildOptionRow(groupId, mountId, labelId, arr, key) {
+    const grp = document.getElementById(groupId);
+    const mnt = document.getElementById(mountId);
+    if (!arr || arr.length === 0) {
+      grp.style.display = "none";
+      return;
+    }
+    grp.style.display = "block";
+    mnt.innerHTML = "";
+
+    arr.forEach((opt, idx) => {
+      const chip = document.createElement("button");
+      chip.className = `config-chip ${idx === 0 ? "active" : ""}`;
+      chip.innerHTML = `
+        <span class="chip-main-txt">${opt.label}</span>
+        ${opt.sub ? `<span class="chip-sub-txt">${opt.sub}</span>` : ""}
+      `;
+      chip.onclick = () => {
+        mnt.querySelectorAll(".config-chip").forEach(c => c.classList.remove("active"));
+        chip.classList.add("active");
+        customState[key] = opt;
+        document.getElementById(labelId).textContent = `— ${opt.label}`;
+        recalculateTotalPrice();
+      };
+      mnt.appendChild(chip);
+    });
+    document.getElementById(labelId).textContent = `— ${arr[0].label}`;
+  }
+
+  // ПЕРЕСЧЕТ СТОИМОСТИ
+  function recalculateTotalPrice() {
+    let sum = activeGadget.basePrice;
+    let parts = [];
+
+    if (customState.chip) {
+      sum += customState.chip.mod || 0;
+      parts.push(customState.chip.label);
+    }
+    if (customState.ram) {
+      sum += customState.ram.mod || 0;
+      parts.push(customState.ram.label);
+    }
+    if (customState.storage) {
+      sum += customState.storage.mod || 0;
+      parts.push(customState.storage.label);
+    }
+    if (customState.displayGlass && customState.displayGlass.mod) {
+      sum += customState.displayGlass.mod;
+      parts.push(customState.displayGlass.label);
+    }
+    if (customState.connectivity && customState.connectivity.mod) {
+      sum += customState.connectivity.mod;
+      parts.push(customState.connectivity.label);
+    }
+
+    document.getElementById("receipt-preview-line").textContent = parts.join(" · ");
+    animateOdometer(sum);
+  }
+
+  // ОДОМЕТР ЦЕНЫ
+  function animateOdometer(targetVal) {
+    const el = document.getElementById("odometer-price");
+    const startVal = currentCounterPrice || targetVal;
+    const duration = 400;
+    const startTime = performance.now();
+
+    function step(now) {
+      const p = Math.min((now - startTime) / duration, 1);
+      const ease = 1 - Math.pow(1 - p, 3);
+      const val = Math.round(startVal + (targetVal - startVal) * ease);
+      el.textContent = `$${val.toLocaleString("en-US")}`;
+      if (p < 1) requestAnimationFrame(step);
+      else currentCounterPrice = targetVal;
+    }
+    requestAnimationFrame(step);
+  }
+
+  function exitToCatalog() {
+    document.getElementById("detail-view").style.display = "none";
+    document.getElementById("catalog-view").style.display = "block";
+    document.getElementById("ambient-aura").style.background = `radial-gradient(circle, var(--accent) 0%, transparent 70%)`;
+  }
+
+  // СТАРТОВАЯ ИНИЦИАЛИЗАЦИЯ
+  window.addEventListener("DOMContentLoaded", () => {
+    const tabBtns = document.querySelectorAll(".tab-btn");
+    moveNavGlider(tabBtns[0]);
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        tabBtns.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        moveNavGlider(btn);
+        selectedCategory = btn.dataset.cat;
+        exitToCatalog();
+        renderCatalogView();
+      });
+    });
+
+    document.getElementById("catalog-search").addEventListener("input", () => {
+      exitToCatalog();
+      renderCatalogView();
+    });
+
+    renderCatalogView();
+  });
+</script>
+</body>
+</html>
